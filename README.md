@@ -1,3 +1,3 @@
 # Halo
 
-We will release it when the paper is published.
+We will release the source code in this month(June).
