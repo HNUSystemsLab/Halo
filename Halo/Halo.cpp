@@ -291,20 +291,21 @@ MemoryManagerPool::MemoryManagerPool() {
   }
 }
 void MemoryManagerPool::info() {
-  size_t m_pm = 0;
-  for (size_t i = 0; i < MAX_PAGE_NUM; i++)
-    if (PPage_table[i] != INVALID) {
-      m_pm += reinterpret_cast<PAGE_METADATA *>(PPage_table[i].load())
-                  ->LOCAL_OFFSET;
-    }
-  size_t m_dm = 0;
-  for (size_t i = 0; i < MAX_PAGE_NUM; i++)
-    if (DPage_table[i])
-      m_dm += reinterpret_cast<PAGE_METADATA *>(DPage_table[i])->LOCAL_OFFSET;
-  printf("DRAM Allocated by Haloc: %.2f GB.\n",
-         float(m_dm) / 1024 / 1024 / 1024);
-  printf("PMem Allocated by Haloc: %.2f GB.\n",
-         float(m_pm) / 1024 / 1024 / 1024);
+  // size_t m_pm = 0;
+  // for (size_t i = 0; i < MAX_PAGE_NUM; i++)
+  //   if (PPage_table[i] != INVALID) {
+  //     m_pm += reinterpret_cast<PAGE_METADATA *>(PPage_table[i].load())
+  //                 ->LOCAL_OFFSET;
+  //   }
+  // size_t m_dm = 0;
+  // for (size_t i = 0; i < MAX_PAGE_NUM; i++)
+  //   if (DPage_table[i])
+  //     m_dm += reinterpret_cast<PAGE_METADATA
+  //     *>(DPage_table[i])->LOCAL_OFFSET;
+  // printf("DRAM Allocated by Haloc: %.2f GB.\n",
+  //        float(m_dm) / 1024 / 1024 / 1024);
+  // printf("PMem Allocated by Haloc: %.2f GB.\n",
+  //        float(m_pm) / 1024 / 1024 / 1024);
 }
 
 void MemoryManagerPool::shutdown(CLHT *clhts[TABLE_NUM]) {

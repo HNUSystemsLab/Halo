@@ -1112,31 +1112,32 @@ class Halo {
     return true;
   }
   void load_factor() {
-    size_t total_slot = 0;
-    size_t used_slot = 0;
-    size_t b_m = 0;
-    for (size_t i = 0; i < TABLE_NUM; i++) {
-      auto c = clhts[i];
-      auto t = c->table;
-      auto n = t->num_buckets;
-      b_m += n * sizeof(Bucket);
-      for (size_t j = 0; j < n; j++) {
-        auto b = t->buckets + j;
-        while (b != nullptr) {
-          for (size_t k = 0; k < ENTRIES_PER_BUCKET; k++) {
-            if (b->key[k] != INVALID) used_slot++;
-            total_slot++;
-          }
-          b = (Bucket *)get_DPage_addr(b->next);
-        }
-      }
-    }
+    // size_t total_slot = 0;
+    // size_t used_slot = 0;
+    // size_t b_m = 0;
+    // for (size_t i = 0; i < TABLE_NUM; i++) {
+    //   auto c = clhts[i];
+    //   auto t = c->table;
+    //   auto n = t->num_buckets;
+    //   b_m += n * sizeof(Bucket);
+    //   for (size_t j = 0; j < n; j++) {
+    //     auto b = t->buckets + j;
+    //     while (b != nullptr) {
+    //       for (size_t k = 0; k < ENTRIES_PER_BUCKET; k++) {
+    //         if (b->key[k] != INVALID) used_slot++;
+    //         total_slot++;
+    //       }
+    //       b = (Bucket *)get_DPage_addr(b->next);
+    //     }
+    //   }
+    // }
 
-    cout << "total_slot: " << total_slot << " used_slot: " << used_slot << " "
-         << (float)used_slot * 100 / total_slot << "%\n";
-    printf("DRAM Allocated by malloc: %.1f GB.\n",
-           float(b_m) / 1024 / 1024 / 1024);
-    memory_manager_Pool.info();
+    // cout << "total_slot: " << total_slot << " used_slot: " << used_slot << "
+    // "
+    //      << (float)used_slot * 100 / total_slot << "%\n";
+    // printf("DRAM Allocated by malloc: %.1f GB.\n",
+    //        float(b_m) / 1024 / 1024 / 1024);
+    // memory_manager_Pool.info();
   }
   void wait_all() { do_insert_now(); }
   void reclaim_ppage(size_t page_id, size_t sz_freed) {
