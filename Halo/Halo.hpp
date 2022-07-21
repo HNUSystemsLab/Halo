@@ -89,7 +89,7 @@ extern std::vector<thread> reclaim_threads;
 extern std::mutex thread_mutex;
 extern bool RECLAIM_LOCK[CORE_NUM];
 
-constexpr bool SNAPSHOT = true;
+constexpr bool SNAPSHOT = false;
 constexpr bool LOGCLEAN = false;
 
 constexpr size_t DEAFULT_SEGMENT_SIZE = 16 * 1024 * 1024;
