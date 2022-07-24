@@ -4,7 +4,7 @@
 In order to suppress write amplification caused by memory allocators and to facilitate recovery, we propose **Halloc**, a highly-efficient memory manager for Halo. In addition, we pro- pose mechanisms such as batched writes, prefetching for hybrid reads, and reactive snapshot to further optimize performance.
 
 ## Paper
-This is the code according to our paper **Halo: A Hybrid PMem-DRAM Persistent Hash Index with Fast Recovery**(accept by SIGMOD '22).
+This is the code for our paper **Halo: A Hybrid PMem-DRAM Persistent Hash Index with Fast Recovery**(accepted by SIGMOD '22).
 
 ## Dependencies
 ### For building
