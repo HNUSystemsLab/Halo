@@ -13,7 +13,7 @@ namespace HALO {
 #define ROUND_UP(s, n) (((s) + (n)-1) & (~(n - 1)))
 
 MemoryManagerPool memory_manager_Pool;
-
+string PM_PATH;
 mutex PM_MemoryManager::mtx;
 mutex DRAM_MemoryManager::mtx;
 mutex MemoryManagerPool::mtx_pm_pool;

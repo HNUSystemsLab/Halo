@@ -47,7 +47,7 @@ constexpr int CLHT_OCCUP_AFTER_RES = 20;
 constexpr int CLHT_PERC_FULL_HALVE = 5; /* % */
 constexpr int CLHT_RATIO_HALVE = 8;
 
-const string PM_PATH = "/mnt/pmem/HaLo/";
+extern string PM_PATH;
 constexpr size_t PAGE_SIZE = 64ULL * 1024 * 1024 /* bytes */;
 constexpr size_t PRESERVE_SIZE_EACH_PAGE = 64 /* bytes */;
 constexpr size_t RESTORE_FILE_SIZE = 1 * 1024 * 1024 * 1024UL;
