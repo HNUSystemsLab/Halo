@@ -1,13 +1,13 @@
 CXX = g++
 CFLAGS = -std=c++17 -O3 -march=native -L./ -I./Halo
-
+CURR=$(pwd)
 CCEH_F := $(CFLAGS) -DCCEHT -std=c++17 -O3 -march=native \
 	-L./third/pmdk/src/nondebug \
-	-I./third/pmdk/src/include  -Wl,-rpath,./third/pmdk/src/nondebug
+	-I./third/pmdk/src/include  -Wl,-rpath,$(CURR)/third/pmdk/src/nondebug
 
 DASH_F := $(CFLAGS) -DDASHT -std=c++17 -O3 -march=native \
 	-L./third/pmdk/src/nondebug \
-	-I./third/pmdk/src/include  -Wl,-rpath,./third/pmdk/src/nondebug
+	-I./third/pmdk/src/include  -Wl,-rpath,$(CURR)/third/pmdk/src/nondebug
 
 CLEVEL_F := $(CFLAGS) -DCLEVELT -std=c++17 -O3 -march=native \
 	-I./third/CLevel/src/common -I./third/CLevel -I./third/CLevel/src -I./third/CLevel/src/common
