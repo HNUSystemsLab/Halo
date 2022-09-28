@@ -10,16 +10,18 @@
 #define NONVAR 1
 using namespace std;
 using namespace HALO;
-int n = 30;
+int n = 32;
 int main(int argc, char *argv[]) {
+  PM_PATH = "/mnt/pmem/Halo/";
+
 #ifdef NONVAR
-  Halo<size_t, size_t> halo(1024);
+  Halo<size_t, size_t> halo(32);
 #elif VARVALUE
   Halo<size_t, std::string> halo(1024);
 #else
   Halo<std::string, std::string> halo(1024);
 #endif
-
+  std::cout << "Halo start." << std::endl;
   int *r = new int[n];
 #ifdef NONVAR
   Pair_t<size_t, size_t> *rp = new Pair_t<size_t, size_t>[n];

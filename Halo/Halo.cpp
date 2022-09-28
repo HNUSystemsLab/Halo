@@ -47,8 +47,8 @@ enum PM_FILE_NAME {
 std::mutex PM_TABLE_UPDATE_RECLAIM_MUTEX[MAX_PAGE_NUM];
 std::string generate_filename(PM_FILE_NAME type, size_t snapshot_version,
                               size_t aid, size_t pid = -1ULL) {
-  auto s = PM_PATH + std::string(1, type) + "_" + to_string(aid) + "_" +
-           to_string(snapshot_version);
+  auto s = PM_PATH + std::string(1, type) + "_" + to_string(snapshot_version) +
+           "_" + to_string(aid);
   if (pid != -1ULL)
     return s + "_" + to_string(pid);
   else
@@ -106,6 +106,7 @@ void MemoryManager::delete_pm_file(size_t page_id) {
 
 pair<size_t, char *> DRAM_MemoryManager::halloc(size_t size) {
   lock_guard<mutex> guard(alloc_mtx);
+  // std::cout << "Allocate Bucket.\n" << std::endl;
   while (true) {
     if (local_offset + size < PAGE_SIZE) {
       local_offset += size;
@@ -125,6 +126,7 @@ void DRAM_MemoryManager::creat_new_space() {
   current_PAGE_ID = DRAM_MemoryManager::PAGE_ID++;
   DPage_table[current_PAGE_ID] = base_addr;
   pages.push_back(current_PAGE_ID);
+  // std::cout << "Create DPage: " << current_PAGE_ID << std::endl;
   local_offset = PRESERVE_SIZE_EACH_PAGE;
   reinterpret_cast<PAGE_METADATA *>(base_addr)->ALLOCATOR_ID = ID;
 }
@@ -218,6 +220,7 @@ void DRAM_MemoryManager::reclaim(Segment *ht_old) {
         }
         for (auto &&p : dm->pages) {
           free(DPage_table[p]);
+          // std::cout << "Reclaim DPage: " << p << std::endl;
           DPage_table[p] = nullptr;
         }
         free(seg->buckets);
@@ -290,23 +293,7 @@ MemoryManagerPool::MemoryManagerPool() {
     DPage_table[i] = nullptr;
   }
 }
-void MemoryManagerPool::info() {
-  // size_t m_pm = 0;
-  // for (size_t i = 0; i < MAX_PAGE_NUM; i++)
-  //   if (PPage_table[i] != INVALID) {
-  //     m_pm += reinterpret_cast<PAGE_METADATA *>(PPage_table[i].load())
-  //                 ->LOCAL_OFFSET;
-  //   }
-  // size_t m_dm = 0;
-  // for (size_t i = 0; i < MAX_PAGE_NUM; i++)
-  //   if (DPage_table[i])
-  //     m_dm += reinterpret_cast<PAGE_METADATA
-  //     *>(DPage_table[i])->LOCAL_OFFSET;
-  // printf("DRAM Allocated by Haloc: %.2f GB.\n",
-  //        float(m_dm) / 1024 / 1024 / 1024);
-  // printf("PMem Allocated by Haloc: %.2f GB.\n",
-  //        float(m_pm) / 1024 / 1024 / 1024);
-}
+void MemoryManagerPool::info() {}
 
 void MemoryManagerPool::shutdown(CLHT *clhts[TABLE_NUM]) {
   if (!SNAPSHOT) return;
@@ -317,23 +304,31 @@ void MemoryManagerPool::shutdown(CLHT *clhts[TABLE_NUM]) {
     auto verion = ++dm->snapshot_version;
     auto sz = clht->table->num_buckets;
     // store segment
-    auto addr = MemoryManager::map_pm_file(
-        sz * sizeof(Bucket),
-        generate_filename(PM_FILE_NAME::SEGMENT_SNAPSHOT, verion, dm->ID));
-    t.push_back(thread([&addr, &sz, &clht]() {
-      pmem_memcpy_persist(addr, clht->table->buckets, sz * sizeof(Bucket));
+    auto name =
+        generate_filename(PM_FILE_NAME::SEGMENT_SNAPSHOT, verion, dm->ID);
+    // printf("\nSnapshot segment:%s %lu\n", name.c_str(), sz * sizeof(Bucket));
+    auto addr = MemoryManager::map_pm_file(sz * sizeof(Bucket), name);
+    t.push_back(std::thread([addr, clht, sz]() {
+      memcpy(addr, clht->table->buckets, sz * sizeof(Bucket));
+      pmem_deep_persist(addr, sz * sizeof(Bucket));
+      pmem_unmap(addr, sz * sizeof(Bucket));
     }));
+
     // store DPage
     for (auto &&p : dm->pages) {
-      auto addr = MemoryManager::map_pm_file(
-          PAGE_SIZE,
-          generate_filename(PM_FILE_NAME::DPAGE_SNAPSHOT, verion, dm->ID, p));
-      t.push_back(thread([&addr, &p]() {
-        pmem_memcpy_persist(addr, DPage_table[p], PAGE_SIZE);
+      auto name2 =
+          generate_filename(PM_FILE_NAME::DPAGE_SNAPSHOT, verion, dm->ID, p);
+      auto addr = MemoryManager::map_pm_file(PAGE_SIZE, name2);
+      // printf("\nSnapshot DPage: %lu,%s \n", p, name2.c_str());
+      t.push_back(std::thread([addr, p]() {
+        memcpy(addr, DPage_table[p], PAGE_SIZE);
+        pmem_deep_persist(addr, PAGE_SIZE);
+        pmem_unmap(addr, PAGE_SIZE);
       }));
     }
   }
   for (auto &&i : t) i.join();
+  t.clear();
 
   for (size_t i = 0; i < TABLE_NUM; i++) {
     auto &dm = clhts[i]->table->hallocD;
@@ -410,28 +405,24 @@ std::vector<size_t> MemoryManagerPool::startup(CLHT *clhts[TABLE_NUM]) {
         string name = entry.path().filename();
         if (name[0] == PM_FILE_NAME::SEGMENT_SNAPSHOT) {
           auto s = split(name, "_");
-
-          auto segmend_id = stoull(s[1]);
-          auto version = stoull(s[2]);
+          auto version = stoull(s[1]);
+          auto segmend_id = stoull(s[2]);
           auto table_size = ROOT->SS[segmend_id].SEGMENT_SIZE;
           if (version == ROOT->SS[segmend_id].SNAPSHOT_VERSION) {
             auto addr = static_cast<uint8_t *>(MemoryManager::map_pm_file(
                 table_size * sizeof(Bucket), entry.path()));
             auto table = new CLHT(table_size, segmend_id, version, false);
-            auto cp = [&](void *dst, void *src, size_t sz) {
-              memcpy(dst, src, sz);
-              pmem_unmap(src, table_size * sizeof(Bucket));
-            };
-            t.push_back(thread(cp, table->table->buckets, addr,
-                               table_size * sizeof(Bucket)));
+            t.push_back(std::thread([addr, table, table_size]() {
+              memcpy(table->table->buckets, addr, table_size * sizeof(Bucket));
+              pmem_unmap(addr, table_size * sizeof(Bucket));
+            }));
+
             clhts[segmend_id] = table;
           } else {
             std::filesystem::remove(entry);
           }
         }
       }
-      for (auto &&i : t) i.join();
-      t.clear();
     }
 
     // Recover Halloc-D
@@ -449,11 +440,12 @@ std::vector<size_t> MemoryManagerPool::startup(CLHT *clhts[TABLE_NUM]) {
         string name = entry.path().filename();
         if (name[0] == PM_FILE_NAME::DPAGE_SNAPSHOT) {
           auto s = split(name, "_");
-          auto aid = stoul(s[1]);
-          auto version = stoull(s[2]);
+          auto version = stoull(s[1]);
+          auto aid = stoul(s[2]);
           auto page_id = stoull(s[3]);
           auto addr = static_cast<PAGE_METADATA *>(
               MemoryManager::map_pm_file(PAGE_SIZE, entry.path()));
+          // printf("\nRecovery DPage:%s \n", name.c_str());
           if (ROOT->SS[addr->ALLOCATOR_ID].SNAPSHOT_VERSION != version) {
             pmem_unmap(addr, PAGE_SIZE);
             filesystem::remove(entry.path());
@@ -462,16 +454,16 @@ std::vector<size_t> MemoryManagerPool::startup(CLHT *clhts[TABLE_NUM]) {
           clhts[aid]->table->hallocD->pages.push_back(page_id);
           DPage_table[page_id] =
               static_cast<char *>(aligned_alloc(CACHE_LINE_SIZE, PAGE_SIZE));
-          auto cp = [](void *dst, void *src) {
-            memcpy(dst, src, PAGE_SIZE);
-            pmem_unmap(dst, PAGE_SIZE);
-          };
-          t.push_back(thread(cp, DPage_table[page_id], addr));
+          t.push_back(thread([page_id, addr]() {
+            memcpy(DPage_table[page_id], addr, PAGE_SIZE);
+            pmem_unmap(addr, PAGE_SIZE);
+          }));
         }
       }
-      for (auto &&i : t) i.join();
-      t.clear();
     }
+    for (auto &&i : t) i.join();
+    t.clear();
+
   } else {
     // Recover Halloc-P
     {
@@ -549,7 +541,8 @@ std::vector<size_t> MemoryManagerPool::startup(CLHT *clhts[TABLE_NUM]) {
       }
       DRAM_MemoryManager::PAGE_ID = next_DPage_id + 1;
     }
-
+    for (auto &&i : t) i.join();
+    t.clear();
     // Recover DPage_table and DPage
     {
       for (size_t i = 0; i < CORE_NUM; i++) {

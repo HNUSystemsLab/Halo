@@ -54,7 +54,7 @@ constexpr size_t RESTORE_FILE_SIZE = 1 * 1024 * 1024 * 1024UL;
 constexpr size_t METADATA_SIZE = 4 * 1024 * 1024UL;
 // it indicates a capacity of 64M*1024*1024 = 64TB
 constexpr size_t MAX_PAGE_NUM = 1024 * 1024;
-constexpr size_t TABLE_NUM = 32;
+constexpr size_t TABLE_NUM = 4;
 constexpr size_t CORE_NUM = 128;
 
 struct root;
@@ -80,7 +80,6 @@ extern thread_local size_t BUFFER_READ_COUNTER;
 enum INSERT_STATE { EXIST = -1, INSERTING = 0, DONE = 1 };
 extern root *ROOT;
 extern atomic_size_t PPage_table[MAX_PAGE_NUM];
-extern char *DRAM_page_table[MAX_PAGE_NUM];
 
 // for reclaim
 extern std::mutex RECLAIM_MTX;
@@ -89,7 +88,7 @@ extern std::vector<thread> reclaim_threads;
 extern std::mutex thread_mutex;
 extern bool RECLAIM_LOCK[CORE_NUM];
 
-constexpr bool SNAPSHOT = false;
+constexpr bool SNAPSHOT = true;
 constexpr bool LOGCLEAN = false;
 
 constexpr size_t DEAFULT_SEGMENT_SIZE = 16 * 1024 * 1024;
@@ -516,7 +515,7 @@ struct CLHT {
     if (resize_lock)
       ;
     volatile Bucket *bucket = table->buckets + bin;
-
+    // auto bbb = bucket;
     uint32_t j;
     do {
       for (j = 0; j < ENTRIES_PER_BUCKET; j++) {
@@ -1004,7 +1003,7 @@ class Halo {
           ts.push_back(std::thread(redo_log, checkpoints[i], i, clhts));
         for (auto &&i : ts) i.join();
       }
-
+      // print();
       std::cout << "Recover cost " << t.elapsed<std::chrono::milliseconds>()
                 << " ms." << endl;
       ROOT->clean = false;
@@ -1139,6 +1138,7 @@ class Halo {
     //        float(b_m) / 1024 / 1024 / 1024);
     // memory_manager_Pool.info();
   }
+
   void wait_all() { do_insert_now(); }
   void reclaim_ppage(size_t page_id, size_t sz_freed) {
     if (!LOGCLEAN) return;
