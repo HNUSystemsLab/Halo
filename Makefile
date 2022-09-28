@@ -1,6 +1,6 @@
 CXX = g++
 CFLAGS = -std=c++17 -O3 -march=native -L./ -I./Halo
-CURR=$(pwd)
+CURR := $(shell pwd)
 CCEH_F := $(CFLAGS) -DCCEHT -std=c++17 -O3 -march=native \
 	-L./third/pmdk/src/nondebug \
 	-I./third/pmdk/src/include  -Wl,-rpath,$(CURR)/third/pmdk/src/nondebug
