@@ -634,7 +634,7 @@ struct CLHT {
               auto f = &reinterpret_cast<PAGE_METADATA *>(
                             PPage_table[old_offset / PAGE_SIZE].load())
                             ->FREED;
-              __sync_fetch_and_add(f, old->size_ori());
+              __sync_fetch_and_add(f, old->size());
             }
             *empty_v = poffset;
           }
