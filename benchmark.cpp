@@ -112,17 +112,11 @@ void run_test(workload_type wlt, int num_thread, string load_data,
       value_lens[count] = value_len;
     } else if (op.compare(update) == 0) {
       infile_run >> value_len;
-      if (workload == "ycsbe")
-        ops[count] = OP_INSERT;
-      else
-        ops[count] = OP_UPDATE;
+      ops[count] = OP_UPDATE;
       keys[count] = key;
       value_lens[count] = value_len;
     } else if (op.compare(read) == 0) {
-      if (workload == "ycsbi")
-        ops[count] = OP_DELETE;
-      else
-        ops[count] = OP_READ;
+      ops[count] = OP_READ;
       keys[count] = key;
     } else if (op.compare(remove) == 0) {
       ops[count] = OP_DELETE;
