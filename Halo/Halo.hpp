@@ -54,7 +54,7 @@ constexpr size_t RESTORE_FILE_SIZE = 1 * 1024 * 1024 * 1024UL;
 constexpr size_t METADATA_SIZE = 4 * 1024 * 1024UL;
 // it indicates a capacity of 64M*1024*1024 = 64TB
 constexpr size_t MAX_PAGE_NUM = 1024 * 1024;
-constexpr size_t TABLE_NUM = 4;
+constexpr size_t TABLE_NUM = 32;
 constexpr size_t CORE_NUM = 128;
 
 struct root;
