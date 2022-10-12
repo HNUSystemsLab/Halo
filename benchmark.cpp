@@ -68,7 +68,6 @@ void run_test(workload_type wlt, int num_thread, string load_data,
       "R7DWAaf1fM4oNLIA7ZdKaspUaU6h"
       "oP2w3t3MktVaBp6MgS6Apbkb7EsihETHHqKFkKMCkYBbKfgsq7Jy49T1Wx2UJsD3XX03kVBb"
       "qRWmryYoMIqiCTCTqa0jIKzqQEnN";
-  if (workload == "ycsbi") MAX_SIZE_RUN = 800000000;
   string insert("INSERT");
   string remove("REMOVE");
   string read("READ");
