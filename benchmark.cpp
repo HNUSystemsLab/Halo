@@ -17,7 +17,7 @@
 using namespace std;
 using namespace pcm;
 // #define LATENCY
-// #define PM_PCM
+#define PM_PCM
 enum { OP_INSERT, OP_READ, OP_DELETE, OP_UPDATE };
 enum workload_type {
   YCSB,

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <ratio>
 #include <type_traits>
+
 template <typename T>
 struct is_duration : std::false_type {};
 
